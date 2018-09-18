@@ -24,4 +24,4 @@ setInterval(() => {
   render(c);
 }, INTERVAL);
 
-render("#000000");
+render("#212325");
