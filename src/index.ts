@@ -23,3 +23,5 @@ setInterval(() => {
 
   render(c);
 }, INTERVAL);
+
+render("#000000");
