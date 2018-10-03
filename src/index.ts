@@ -30,7 +30,8 @@ const calcSeed = (every, start, time) => Math.floor((time - start) / every);
 const render = (
   elem1: HTMLDivElement,
   elem2: HTMLDivElement,
-  color: string
+  color: string,
+  colors: string[]
 ) => {
   elem1.style.color = color;
   elem1.innerText = color;
@@ -43,10 +44,17 @@ const START = new Date(new Date().getFullYear(), 0, 1, 0, 0, 0, 0).getTime();
 const txt = document.querySelector<HTMLDivElement>(".color .txt");
 const bg = document.querySelector<HTMLDivElement>(".colors");
 
+let colors = [];
 const source = interval(INTERVAL);
 
 source
-  .pipe(startWith(START))
-  .pipe(scan<number>(() => calcSeed(INTERVAL, START, new Date().getTime())))
-  .pipe(map((x: number) => numToColor(randomNum(x))))
-  .subscribe(color => render(txt, bg, color));
+  .pipe(
+    startWith(START),
+    scan(() => calcSeed(INTERVAL, START, new Date().getTime())),
+    map((x: number) => numToColor(randomNum(x)))
+  )
+  .subscribe(color => {
+    // save latest 5 colors
+    colors = [...colors, color].slice(-5);
+    render(txt, bg, color, colors);
+  });
