@@ -1,13 +1,14 @@
-import { interval } from "rxjs";
-import { map, scan, startWith } from "rxjs/operators";
+// import { interval } from "rxjs";
+// import { map, scan, startWith } from "rxjs/operators";
 import {
-  BoxBufferGeometry,
   Color,
   DirectionalLight,
+  DoubleSide,
   Math as TMath,
   Mesh,
-  MeshLambertMaterial,
+  MeshBasicMaterial,
   PerspectiveCamera,
+  RingGeometry,
   Scene,
   WebGLRenderer
 } from "three";
@@ -15,12 +16,16 @@ import { Random } from "./utils";
 
 // we need this time to display 16777215 colors in a year
 const INTERVAL = 1879.69219;
+// let's start with the first milisecond of the current year
+const START = new Date(new Date().getFullYear(), 0, 1, 0, 0, 0, 0).getTime();
+const NUM_ELMS = 80;
+const GAP = -30;
 
 const toHex = (num: number) =>
   Math.floor(num)
     .toString(16)
     // @ts-ignore
-    .padEnd(6, "0");
+    .padEnd(6, "F");
 
 const numToColor = (num: number): string =>
   "#" + toHex((num / 4294967294) * 16777215);
@@ -37,35 +42,44 @@ const nextRndFrom = (limit: number, time: number): string[] =>
 
 // calculate the seed in this exact moment
 const calcSeed = (every, start, time) => Math.floor((time - start) / every);
+const colorByIndex = (i, s) => idx =>
+  numToColor(randomNum(calcSeed(i, s, s + idx * i)));
+
 const createCube = geometry => (_, idx) => {
   const object = new Mesh(
     geometry,
-    new MeshLambertMaterial({ color: Math.random() * 0xffffff })
+    new MeshBasicMaterial({
+      color: colorByIndex(INTERVAL, START)(idx),
+      side: DoubleSide
+    })
   );
-  object.position.x = Math.random() * 800 - 400;
-  object.position.y = Math.random() * 800 - 400;
-  object.position.z = Math.random() * 800 - 400;
+  object.position.x = -6 + Math.floor(Math.random() * 12);
+  object.position.y = 0;
+  object.position.z = GAP * idx;
+  object.colorIdx = idx;
   return object;
 };
 
 const init = (container, camera, scene, renderer) => {
   document.body.appendChild(container);
-  scene.background = new Color(0xf0f0f0);
+  scene.background = new Color(0x232527);
 
-  const light = new DirectionalLight(0xffffff, 1);
-  light.position.set(1, 1, 1).normalize();
+  const light = new DirectionalLight(0xffffff, 0.6);
+  light.position.set(1, 1, 2).normalize();
   scene.add(light);
 
-  const geometry = new BoxBufferGeometry(20, 20, 20);
-  const cubes = Array(5)
+  const geometry = new RingGeometry(60, 30, 128);
+  const els = Array(NUM_ELMS)
     .fill(0)
     .map(createCube(geometry));
 
-  cubes.forEach(x => scene.add(x));
+  els.forEach(x => scene.add(x));
 
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   container.appendChild(renderer.domElement);
+
+  return els;
 };
 
 // const render = (
@@ -79,52 +93,61 @@ const init = (container, camera, scene, renderer) => {
 //   elem2.style.backgroundColor = color;
 // };
 
-const render = (C, S, R, d) => {
-  const radius = 100;
+const oscilate = d => obj => {
+  obj.position.y = 200 * Math.sin(TMath.degToRad(d));
+};
+
+const moveZ = d => obj => {
+  obj.position.z += d;
+};
+
+const swap = final => obj => {
+  if (obj.position.z > 100) {
+    obj.position.z = final;
+    obj.colorIdx += NUM_ELMS;
+    const color = colorByIndex(INTERVAL, START)(obj.colorIdx);
+    obj.material.color.setStyle(color);
+  }
+};
+
+const render = (C, S, R, objs: Mesh[], d) => {
+  const radius = 20;
   C.position.x = radius * Math.sin(TMath.degToRad(d));
   C.position.y = radius * Math.sin(TMath.degToRad(d));
-  C.position.z = radius * Math.cos(TMath.degToRad(d));
-  C.lookAt(S.position);
+  // C.position.z -= d * 0.1;
+  const final = objs.length * GAP;
+
+  for (let i = 0; i < objs.length; i++) {
+    const obj = objs[i];
+    // oscilate(d)(obj);
+    moveZ(1)(obj);
+    swap(final)(obj);
+  }
+
   C.updateMatrixWorld();
   R.render(S, C);
 };
 
-const animate = (C, S, R, x) => () => {
+const animate = (C, S, R, objs, x) => () => {
   x += 0.1;
-  requestAnimationFrame(animate(C, S, R, x));
-  render(camera$, scene$, renderer$, x);
+  requestAnimationFrame(animate(C, S, R, objs, x));
+  render(camera$, scene$, renderer$, objs, x);
 };
-
-// let's start with the first milisecond of the current year
-const START = new Date(new Date().getFullYear(), 0, 1, 0, 0, 0, 0).getTime();
-
-// const txt = document.querySelector<HTMLDivElement>(".color .txt");
-// const bg = document.querySelector<HTMLDivElement>(".colors");
-
-let colors = [];
-const source = interval(INTERVAL);
-
-source
-  .pipe(
-    startWith(START),
-    scan(() => calcSeed(INTERVAL, START, new Date().getTime())),
-    map((x: number) => numToColor(randomNum(x)))
-  )
-  .subscribe(color => {
-    // save latest 5 colors
-    colors = [...colors, color].slice(-5);
-    // render(txt, bg, color, colors);
-  });
 
 const container$ = document.createElement("div");
 const camera$ = new PerspectiveCamera(
-  70,
+  20,
   window.innerWidth / window.innerHeight,
   1,
   10000
 );
+camera$.position.x = 6;
+camera$.position.y = 0;
+// camera$.rotation.x = 100;
+// camera$.rotation.z = 200;
+
 const scene$ = new Scene();
 const renderer$ = new WebGLRenderer();
+const objs$ = init(container$, camera$, scene$, renderer$);
 
-init(container$, camera$, scene$, renderer$);
-animate(camera$, scene$, renderer$, 0)();
+animate(camera$, scene$, renderer$, objs$, 0)();
