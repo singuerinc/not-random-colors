@@ -13,6 +13,8 @@ import {
 import { Random } from "./utils";
 
 // we need this time to display 16777215 colors in a year
+const WIDTH = 1280;
+const HEIGHT = 1024;
 const INTERVAL = 1879.69219;
 // let's start with the first milisecond of the current year
 const START = new Date(new Date().getFullYear(), 0, 1, 0, 0, 0, 0).getTime();
@@ -55,6 +57,8 @@ const createCube = geometry => (_, idx) => {
 
 const init = (container, camera, scene, renderer) => {
   document.body.appendChild(container);
+  container.style.width = "800px";
+  container.style.height = "600px";
   scene.background = new Color(0x232527);
 
   const light = new DirectionalLight(0xffffff, 0.6);
@@ -117,10 +121,10 @@ const animate = (C, S, R, objs, x) => () => {
 
 const container$ = document.createElement("div");
 const camera$ = new PerspectiveCamera(
-  20,
+  45,
   window.innerWidth / window.innerHeight,
   1,
-  10000
+  1000
 );
 camera$.position.x = 6;
 camera$.position.y = 0;
