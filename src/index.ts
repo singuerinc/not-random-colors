@@ -40,7 +40,7 @@ const calcSeed = (every, start, time) => Math.floor((time - start) / every);
 const colorByIndex = (i, s) => idx =>
   numToColor(randomNum(calcSeed(i, s, s + idx * i)));
 
-const createCube = geometry => (_, idx) => {
+const create = geometry => (_, idx) => {
   const color = colorByIndex(INTERVAL, START)(idx);
   const object = new Mesh(
     geometry,
@@ -70,7 +70,7 @@ const init = (container, camera, scene, renderer, stats) => {
   const geometry = new RingGeometry(60, 30, 128);
   const els = Array(NUM_ELMS)
     .fill(0)
-    .map(createCube(geometry));
+    .map(create(geometry));
 
   els.forEach(x => scene.add(x));
 
