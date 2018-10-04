@@ -79,22 +79,9 @@ const init = (container, camera, scene, renderer) => {
   return els;
 };
 
-const oscilate = d => obj => {
-  obj.position.y = 200 * Math.sin(TMath.degToRad(d));
-};
-
-const moveZ = d => obj => {
-  obj.position.z += d;
-};
-
-const swap = final => obj => {
-  if (obj.position.z > 100) {
-    obj.position.z = final;
-    obj.colorIdx += NUM_ELMS;
-    const color = colorByIndex(INTERVAL, START)(obj.colorIdx);
-    obj.material.color.setStyle(new Color(color));
-  }
-};
+// const oscilate = d => obj => {
+//   obj.position.y = 200 * Math.sin(TMath.degToRad(d));
+// };
 
 const render = (C, S, R, objs: Mesh[], d) => {
   const radius = 20;
@@ -104,9 +91,15 @@ const render = (C, S, R, objs: Mesh[], d) => {
 
   for (let i = 0; i < objs.length; i++) {
     const obj = objs[i];
-    // oscilate(d)(obj);
-    moveZ(1)(obj);
-    swap(final)(obj);
+    obj.position.z += 1;
+
+    // swap
+    if (obj.position.z > 100) {
+      obj.position.z = final;
+      obj.colorIdx += NUM_ELMS;
+      const color = colorByIndex(INTERVAL, START)(obj.colorIdx);
+      obj.material.color.setStyle(new Color(color));
+    }
   }
 
   C.updateMatrixWorld();
