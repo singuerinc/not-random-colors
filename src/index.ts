@@ -1,3 +1,4 @@
+import Stats from "stats.js";
 import {
   Color,
   DirectionalLight,
@@ -55,8 +56,9 @@ const createCube = geometry => (_, idx) => {
   return object;
 };
 
-const init = (container, camera, scene, renderer) => {
+const init = (container, camera, scene, renderer, stats) => {
   document.body.appendChild(container);
+  document.body.appendChild(stats.dom);
   container.style.width = "800px";
   container.style.height = "600px";
   scene.background = new Color(0x232527);
@@ -83,7 +85,9 @@ const init = (container, camera, scene, renderer) => {
 //   obj.position.y = 200 * Math.sin(TMath.degToRad(d));
 // };
 
-const render = (C, S, R, objs: Mesh[], d) => {
+const render = (C, S, R, objs: Mesh[], d, stats) => {
+  stats.begin();
+
   const radius = 20;
   C.position.x = radius * Math.sin(TMath.degToRad(d));
   C.position.y = radius * Math.sin(TMath.degToRad(d));
@@ -103,13 +107,16 @@ const render = (C, S, R, objs: Mesh[], d) => {
   }
 
   C.updateMatrixWorld();
+
+  stats.end();
+
   R.render(S, C);
 };
 
-const animate = (C, S, R, objs, x) => () => {
+const animate = (C, S, R, objs, x, stats) => () => {
   x += 0.1;
-  requestAnimationFrame(animate(C, S, R, objs, x));
-  render(camera$, scene$, renderer$, objs, x);
+  requestAnimationFrame(animate(C, S, R, objs, x, stats));
+  render(camera$, scene$, renderer$, objs, x, stats);
 };
 
 const container$ = document.createElement("div");
@@ -122,8 +129,9 @@ const camera$ = new PerspectiveCamera(
 camera$.position.x = 6;
 camera$.position.y = 0;
 
+const stats$ = new Stats();
 const scene$ = new Scene();
 const renderer$ = new WebGLRenderer();
-const objs$ = init(container$, camera$, scene$, renderer$);
+const objs$ = init(container$, camera$, scene$, renderer$, stats$);
 
-animate(camera$, scene$, renderer$, objs$, 0)();
+animate(camera$, scene$, renderer$, objs$, 0, stats$)();
