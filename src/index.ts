@@ -1,5 +1,3 @@
-// import { interval } from "rxjs";
-// import { map, scan, startWith } from "rxjs/operators";
 import {
   Color,
   DirectionalLight,
@@ -25,7 +23,7 @@ const toHex = (num: number) =>
   Math.floor(num)
     .toString(16)
     // @ts-ignore
-    .padEnd(6, "F");
+    .padEnd(6, "0");
 
 const numToColor = (num: number): string =>
   "#" + toHex((num / 4294967294) * 16777215);
@@ -34,22 +32,17 @@ const numToColor = (num: number): string =>
 // for the same seed (unique second in the year)
 const randomNum = (seed: number): number => new Random(seed).next();
 
-const nextRndFrom = (limit: number, time: number): string[] =>
-  Array(limit)
-    .fill(0)
-    .map((v, i) => time + INTERVAL * i)
-    .map(numToColor);
-
 // calculate the seed in this exact moment
 const calcSeed = (every, start, time) => Math.floor((time - start) / every);
 const colorByIndex = (i, s) => idx =>
   numToColor(randomNum(calcSeed(i, s, s + idx * i)));
 
 const createCube = geometry => (_, idx) => {
+  const color = colorByIndex(INTERVAL, START)(idx);
   const object = new Mesh(
     geometry,
     new MeshBasicMaterial({
-      color: colorByIndex(INTERVAL, START)(idx),
+      color,
       side: DoubleSide
     })
   );
@@ -82,17 +75,6 @@ const init = (container, camera, scene, renderer) => {
   return els;
 };
 
-// const render = (
-//   elem1: HTMLDivElement,
-//   elem2: HTMLDivElement,
-//   color: string,
-//   colors: string[]
-// ) => {
-//   elem1.style.color = color;
-//   elem1.innerText = color;
-//   elem2.style.backgroundColor = color;
-// };
-
 const oscilate = d => obj => {
   obj.position.y = 200 * Math.sin(TMath.degToRad(d));
 };
@@ -106,7 +88,7 @@ const swap = final => obj => {
     obj.position.z = final;
     obj.colorIdx += NUM_ELMS;
     const color = colorByIndex(INTERVAL, START)(obj.colorIdx);
-    obj.material.color.setStyle(color);
+    obj.material.color.setStyle(new Color(color));
   }
 };
 
@@ -114,7 +96,6 @@ const render = (C, S, R, objs: Mesh[], d) => {
   const radius = 20;
   C.position.x = radius * Math.sin(TMath.degToRad(d));
   C.position.y = radius * Math.sin(TMath.degToRad(d));
-  // C.position.z -= d * 0.1;
   const final = objs.length * GAP;
 
   for (let i = 0; i < objs.length; i++) {
@@ -143,8 +124,6 @@ const camera$ = new PerspectiveCamera(
 );
 camera$.position.x = 6;
 camera$.position.y = 0;
-// camera$.rotation.x = 100;
-// camera$.rotation.z = 200;
 
 const scene$ = new Scene();
 const renderer$ = new WebGLRenderer();
