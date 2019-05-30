@@ -8,7 +8,7 @@
     "stats.js": "^0.17.0",
     "three": "^0.97.0",
     "tslint": "^5.11.0",
-    "typescript": "^3.0.3"
+    "typescript": "^3.5.1"
   },
   "scripts": {
     "build": "parcel build src/index.html",
